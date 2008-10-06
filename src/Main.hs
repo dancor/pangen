@@ -1,12 +1,12 @@
 module Main where
 
 import Control.Arrow
+import Control.Monad.Random
+import qualified Data.Map as M
 
--- types are raw like Int, or take type params like 
-data Type = Type [String]
-
-Type = Var Int | FType Type Type | Datum String [Type] | BaseType String
-Func = Func String Type
+data Type = Var Int | FType Type Type | Datum String [Type] | BaseType String
+  deriving (Eq, Ord)
+data Func = Func String Type
 
 -- todo: parse human readable id :: a -> a to this
 -- note: we are assuming all List's will matchingly have one var etc..
@@ -16,8 +16,8 @@ Func = Func String Type
 --    but we could relax this for algorithmic simplicity or efficiency..
 funcs :: [Func]
 funcs = [
-  Func "id" (FType (Var 1) (Var 1)),
-  Func "const" (FType (Var 1) (FType (Var 2) (Var 1))),
+  Func "id" (a --> a),
+  Func "const" (FType a (FType b a)),
   Func "flip" (FType (FType (Var 1) (FType (Var 2) (Var 3))) 
     (FType (Var 2) (FType (Var 1) (Var 3)))),
   Func "(.)" (FType (FType (Var 1) (Var 2)) 
@@ -26,24 +26,26 @@ funcs = [
   Func "map" (FType (FType (Var 1) (Var 2)) 
     (FType (Datum "List" [Var 1]) (Datum "List" [Var 2]))),
   Func "(+)" (FType (BaseType "Int") (FType (BaseType "Int") (BaseType "Int")))
-  ]
+  ] where
+    (-->) = FType
+    a = Var 1
+    b = Var 2
 
-funcMap = fromListWith (++) $ map (second (:[]) . f) funcs where
+funcMap = M.fromListWith (++) $ map (second (:[]) . f) funcs where
   f (Func name (FType t1 t2)) = (t1, (t2, name))
 
 genExpr :: Type -> Rand g [String]
 genExpr (BaseType t) = case t of
-  "Int" -> return "1" -- todo: some variety..
+  "Int" -> return ["1"] -- todo: some variety..
   _ -> error $ "don't know how to generate vals for base type: " ++ t
 genExpr (Datum t vars) = case t of
-  "List" -> return "Empty"  -- todo: variety
+  "List" -> return ["Empty"]  -- todo: variety
   _ -> error $ "don't know how to generate vals for data type: " ++ t
 genExpr (Var 1) = genExpr (BaseType "Int") -- todo: variety
 genExpr (Var _) = error "renumbering failure.."
-genExpr (FType t1 t2) = 
+genExpr (FType t1 t2) = error "todo"
 
 main :: IO ()
 main = do
-  gen <- getStdGen
-  genF gen 
-  putStrLn "hi"
+  e <- evalRandIO . genExpr $ BaseType "Int"
+  print e

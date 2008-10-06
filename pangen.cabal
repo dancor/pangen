@@ -5,7 +5,7 @@ license-file:   LICENSE
 author:         dan corson <danl@alum.mit.edu>
 synopsis:       generate random haskell functions
 build-type:     Simple
-build-depends:  base, haskell98
+build-depends:  MonadRandom, base, containers
 
 executable:     pangen
 main-is:        Main.hs
