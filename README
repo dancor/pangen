@@ -1,0 +1,32 @@
+thesis
+- tiny functions, of a specified type, and made of widely-used other functions,
+  are interesting
+
+- we can study really simple functions at first, like of the form f . g . h
+
+- there are certain things that are never interesting tho, like "id . "..
+- but id is useful in other cases
+
+tinyness
+- it's probably cooler to count total function count (f . g . lolo -> 5)
+
+scope
+- we won't be treating defining new data types..
+- but we'll have to include some data types like list..
+  data List a = Empty | Cons a (List a)
+
+- we have to separate functions and constants even tho they are really same in
+  haskell..
+
+id :: a -> a
+const :: a -> b -> a
+flip :: (a -> b -> c) -> b -> a -> c
+dot :: (a -> b) -> (b -> c) -> a -> c
+repeat :: a -> List a
+map :: (a -> b) -> List a -> List b
+
+example: f :: a -> (a -> b)
+f = id g       where g :: a -> (a -> b)
+f = const g    forces a to be a1 -> a2
+
+
