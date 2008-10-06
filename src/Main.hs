@@ -16,20 +16,21 @@ data Func = Func String Type
 --    but we could relax this for algorithmic simplicity or efficiency..
 funcs :: [Func]
 funcs = [
-  Func "id" (a --> a),
-  Func "const" (FType a (FType b a)),
-  Func "flip" (FType (FType (Var 1) (FType (Var 2) (Var 3))) 
-    (FType (Var 2) (FType (Var 1) (Var 3)))),
-  Func "(.)" (FType (FType (Var 1) (Var 2)) 
-    (FType (FType (Var 2) (Var 3)) (FType (Var 1) (Var 3)))),
-  Func "repeat" (FType (Var 1) (Datum "List" [Var 1])),
-  Func "map" (FType (FType (Var 1) (Var 2)) 
-    (FType (Datum "List" [Var 1]) (Datum "List" [Var 2]))),
-  Func "(+)" (FType (BaseType "Int") (FType (BaseType "Int") (BaseType "Int")))
+  "id" -:: (a --> a),
+  "const" -:: (a --> (b --> a)),
+  "flip" -:: ((a --> (b --> c)) --> (b --> (a --> c))),
+  "(.)" -:: ((a --> b) --> ((b --> c) --> (a --> c))),
+  "repeat" -:: (a --> myList a),
+  "map" -:: ((a --> b) --> (myList a --> myList b)),
+  "(+)" -:: (myInt --> (myInt --> myInt))
   ] where
     (-->) = FType
+    (-::) = Func
+    myList x = Datum "List" [x]
+    myInt = BaseType "Int"
     a = Var 1
     b = Var 2
+    c = Var 3
 
 funcMap = M.fromListWith (++) $ map (second (:[]) . f) funcs where
   f (Func name (FType t1 t2)) = (t1, (t2, name))
