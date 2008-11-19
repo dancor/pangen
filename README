@@ -4,7 +4,9 @@ thesis
 
 - we can study really simple functions at first, like of the form f . g . h
 
-- there are certain things that are never interesting tho, like "id . "..
+- there are certain things that are uninteresting tho
+  - (id x) should always just be x
+  - but like (repeat id) could be interesting
 - but id is useful in other cases
 
 tinyness
@@ -18,15 +20,41 @@ scope
 - we have to separate functions and constants even tho they are really same in
   haskell..
 
+wheel
+- i think this is pretty different from djinn that just finds a function
+  without making any reference to haskell standard functions
+- in same way different from coq which is just mega-djinn right
+- we are repeating type inference, not sure if we could make use of ghc's or
+  typing-hs-in-hs.. i don't know why they have tycons etc..
+
+f g :: a  means f :: b -> a and g :: b
+a and b can be arrow types
+
+f g :: a1 -> a2 means f :: b -> (a1 -> a2) and g :: b
+
 id :: a -> a
 const :: a -> b -> a
 flip :: (a -> b -> c) -> b -> a -> c
-dot :: (a -> b) -> (b -> c) -> a -> c
+(.) :: (a -> b) -> (b -> c) -> a -> c
 repeat :: a -> List a
 map :: (a -> b) -> List a -> List b
-
-example: f :: a -> (a -> b)
-f = id g       where g :: a -> (a -> b)
-f = const g    forces a to be a1 -> a2
+(+) :: Int -> Int -> Int
 
 
+example: f :: a -> a -> b
+f = id g       where g :: a -> a -> b
+f = const g    where g :: a -> b
+f = flip g     where g :: a -> a -> b
+f = (.) g      impossible
+f = repeat g   impossible
+f = map g      impossible
+f = (+) g      impossible
+
+example: f :: a -> b -> b -> c
+f = id g       where g :: a -> b -> b -> c
+f = const g    where g :: a -> a -> b
+f = flip g     where g :: a -> b -> a -> c
+f = (.) g      impossible
+f = repeat g   impossible
+f = map g      impossible
+f = (+) g      impossible
