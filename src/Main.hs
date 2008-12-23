@@ -13,7 +13,7 @@ infixr 9 :->
 infixr 8 :::
 data Type = Var Int | Type :-> Type | Datum String [Type] | BaseType String
   deriving (Eq, Ord, Show)
-data Func = String ::: Type
+data Func = (:::) {fName :: String, fType :: Type}
 type Subst = [(Int, Type)]
 
 -- basetypes _could_ be considered Datum .. [] if that simplifies things..
@@ -45,9 +45,11 @@ funcs = [
 funcToType :: M.Map String Type
 funcToType = M.fromList $ map (\ (name ::: t) -> (name, t)) funcs
 
+{-
 funcMap :: M.Map Type [(Type, String)]
 funcMap = M.fromListWith (++) $ map (second (:[]) . f) funcs where
   f (name ::: (t1 :-> t2)) = (t1, (t2, name))
+  -}
 
 genExpr :: Type -> Rand g [String]
 genExpr (BaseType t) = case t of
@@ -58,8 +60,13 @@ genExpr (Datum t vars) = case t of
   _ -> error $ "Don't know how to generate vals for data type: " ++ t
 genExpr (Var 1) = genExpr (BaseType "Int") -- todo: variety
 genExpr (Var _) = error "Renumbering failure.."
-genExpr (t1 :-> t2) = error "lol"
-  -- find something that starts with t1
+genExpr t@(t1 :-> t2) = do
+  -- maybe end right away if poss
+  case M.lookup t funcToType of
+    Just
+    then
+  error "lol"
+  -- find something that starts with t1 or more generic
 
 class Types t where
   apply :: Subst -> t -> t
@@ -184,19 +191,23 @@ runTests = do
     ]
   when (failures c /= 0) $ error "Test Fail!!!"
 
--- we should try deriving last = head . reverse
-
 main :: IO ()
 main = do
-  runTests
-  {-
-  eval <- evalRandIO . genExpr $ myInt :-> myInt
-  print eval
-  -}
   let
     a = Var 1
     b = Var 2
     c = Var 3
+  -- move this to compile step
+  runTests
+
+  -- let's see if we can find  const . const
+  eval <- evalRandIO . genExpr $ a :-> b :-> c :-> a
+  print eval
+
+  -- later: we should try deriving last = head . reverse
+
+  {-
+  let
     funcNames = map (\ (n ::: _) -> n) funcs
     tryFG f gStr = hWithFEqGH f . fromJust $ M.lookup gStr funcToType
     tryF f = (f, map (\ gStr -> (gStr, tryFG f gStr)) funcNames)
@@ -207,3 +218,4 @@ main = do
       (map (\ (s, res) -> [s ++ ":", show res]) ress)
   pp $ tryF myF1
   pp $ tryF myF2
+  -}

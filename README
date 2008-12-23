@@ -27,6 +27,10 @@ wheel
 - we are repeating type inference, not sure if we could make use of ghc's or
   typing-hs-in-hs.. i don't know why they have tycons etc..
 
+- breadth search is only way to find all possibilities in inf space,
+  (but can use inf space), but there can still be some depth heuristics for
+  efficiency etc
+
 f g :: a  means f :: b -> a and g :: b
 a and b can be arrow types
 
@@ -58,3 +62,5 @@ f = (.) g      impossible
 f = repeat g   impossible
 f = map g      impossible
 f = (+) g      impossible
+
+
