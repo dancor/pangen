@@ -62,11 +62,14 @@ genExpr (Var 1) = genExpr (BaseType "Int") -- todo: variety
 genExpr (Var _) = error "Renumbering failure.."
 genExpr t@(t1 :-> t2) = do
   -- maybe end right away if poss
+  return . map fName $ filter (isRight . unify t . fType) funcs
+  {-
   case M.lookup t funcToType of
     Just
     then
   error "lol"
   -- find something that starts with t1 or more generic
+  -}
 
 class Types t where
   apply :: Subst -> t -> t
@@ -200,11 +203,27 @@ main = do
   -- move this to compile step
   runTests
 
-  -- let's see if we can find  const . const
-  eval <- evalRandIO . genExpr $ a :-> b :-> c :-> a
+  eval <- evalRandIO . genExpr $ myInt :-> myInt
+  print eval
+  -- flip flip
+  eval <- evalRandIO . genExpr $ a :-> (b :-> a :-> c) :-> b :-> c
   print eval
 
+  {-
+  -- let's see if we can find  (.) const const
+  eval <- evalRandIO . genExpr $ a :-> b :-> c :-> a
+  print eval
+  -}
+
   -- later: we should try deriving last = head . reverse
+
+  {-
+  -- when we get to considering parens:
+  -- flip (flip . flip) flip
+  eval <- evalRandIO . genExpr $
+    (((a :-> b :-> c) :-> b :-> a :-> c) :-> d :-> e) :-> d :-> e
+  print eval
+  -}
 
   {-
   let
