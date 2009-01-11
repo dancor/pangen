@@ -17,8 +17,14 @@ data Func = (:::) {fName :: String, fType :: Type}
 type Subst = [(Int, Type)]
 
 -- basetypes _could_ be considered Datum .. [] if that simplifies things..
+
+myInt :: Type
 myInt = BaseType "Int"
+
+myList :: Type -> Type
 myList x = Datum "List" [x]
+
+myPair :: Type -> Type -> Type
 myPair x y = Datum "Pair" [x, y]
 
 -- todo: parse normal id :: a -> a from .hs input file to this
