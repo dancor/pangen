@@ -63,4 +63,12 @@ f = repeat g   impossible
 f = map g      impossible
 f = (+) g      impossible
 
+  Var 1 :-> (Var 2 :-> (Var 2 :-> Var 3))
 
+  id:    Right (Var 1 :-> (Var 2 :-> (Var 2 :-> Var 3)))
+  const: Right (Var 1 :-> (Var 2 :-> (Var 2 :-> Var 3)))
+  flip:  Right (Var 1 :-> (Var 2 :-> (Var 2 :-> Var 3)))
+  (.):   Right ((Var 1 :-> Var 2) :-> (Var 1 :-> (Var 3 :-> Var 4)))
+
+  f :: a -> b -> b -> c
+  g h :: (a -> a) -> a -> b -> c
