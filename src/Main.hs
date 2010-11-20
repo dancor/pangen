@@ -1,8 +1,9 @@
 module Main where
 
 import Control.Arrow
-import Control.Monad.Error
+import Control.Monad
 import Control.Monad.Random
+import Data.Either
 import Data.List
 import Data.Maybe
 import FUtil
@@ -13,7 +14,7 @@ infixr 9 :->
 infixr 8 :::
 data Type = Var Int | Type :-> Type | Datum String [Type] | BaseType String
   deriving (Eq, Ord, Show)
-data Func = (:::) {fName :: String, fType :: Type}
+data Func = (:::) {funcName :: String, funcType :: Type}
 type Subst = [(Int, Type)]
 
 -- basetypes _could_ be considered Datum .. [] if that simplifies things..
@@ -39,23 +40,28 @@ funcs = [
   "const" ::: a :-> b :-> a,
   "flip" ::: (a :-> b :-> c) :-> b :-> a :-> c,
   "(.)" ::: (a :-> b) :-> (c :-> a) :-> c :-> b,
+  "($)" ::: (a :-> b) :-> a :-> b,
   "repeat" ::: a :-> myList a,
   "map" ::: (a :-> b) :-> myList a :-> myList b,
-  "(+)" ::: myInt :-> myInt :-> myInt,
-  "($)" ::: (a :-> b) :-> a :-> b
+  "(+)" ::: myInt :-> myInt :-> myInt
   ] where
   a = Var 1
   b = Var 2
   c = Var 3
 
-funcToType :: M.Map String Type
-funcToType = M.fromList $ map (\ (name ::: t) -> (name, t)) funcs
+funcToTypeMap = M.fromList $ map (\ (name ::: t) -> (name, t)) funcs
 
 {-
 funcMap :: M.Map Type [(Type, String)]
 funcMap = M.fromListWith (++) $ map (second (:[]) . f) funcs where
   f (name ::: (t1 :-> t2)) = (t1, (t2, name))
   -}
+
+isLeft (Left _) = True
+isLeft _ = False
+
+isRight (Right _) = True
+isRight _ = False
 
 genExpr :: Type -> Rand g [String]
 genExpr (BaseType t) = case t of
@@ -67,15 +73,7 @@ genExpr (Datum t vars) = case t of
 genExpr (Var 1) = genExpr (BaseType "Int") -- todo: variety
 genExpr (Var _) = error "Renumbering failure.."
 genExpr t@(t1 :-> t2) = do
-  -- maybe end right away if poss
-  return . map fName $ filter (isRight . unify t . fType) funcs
-  {-
-  case M.lookup t funcToType of
-    Just
-    then
-  error "lol"
-  -- find something that starts with t1 or more generic
-  -}
+  return . map funcName $ filter (isRight . unify t . funcType) funcs
 
 class Types t where
   apply :: Subst -> t -> t
@@ -179,9 +177,10 @@ runTests = do
     f2 = a :-> b :-> b :-> c
     -- check that f = g h' implies that h' has type h
     assFGH fStr f gStr h = assertEqual (fStr ++ " " ++ gStr) (Right h) .
-      hWithFEqGH f . fromJust $ M.lookup gStr funcToType
-    assFGHFail fStr f gStr = assertBool (fStr ++ " " ++ gStr) . isLeft .
-      hWithFEqGH f . fromJust $ M.lookup gStr funcToType
+      hWithFEqGH f . fromJust $ M.lookup gStr funcToTypeMap
+    assFGHFail fStr f gStr = assertBool (fStr ++ " " ++ gStr) . 
+      isLeft . hWithFEqGH f . fromJust $ 
+      M.lookup gStr funcToTypeMap
   c <- runTestTT $ TestList $ map TestCase [
     assFGH "f1" f1 "id" f1,
     assFGH "f1" f1 "const" $ a :-> b,
@@ -209,38 +208,6 @@ main = do
   -- move this to compile step
   runTests
 
-  eval <- evalRandIO . genExpr $ myInt :-> myInt
+  --eval <- evalRandIO . genExpr $ a :-> (b :-> a :-> c) :-> b :-> c
+  eval <- evalRandIO . genExpr $ a :-> a
   print eval
-  -- flip flip
-  eval <- evalRandIO . genExpr $ a :-> (b :-> a :-> c) :-> b :-> c
-  print eval
-
-  {-
-  -- let's see if we can find  (.) const const
-  eval <- evalRandIO . genExpr $ a :-> b :-> c :-> a
-  print eval
-  -}
-
-  -- later: we should try deriving last = head . reverse
-
-  {-
-  -- when we get to considering parens:
-  -- flip (flip . flip) flip
-  eval <- evalRandIO . genExpr $
-    (((a :-> b :-> c) :-> b :-> a :-> c) :-> d :-> e) :-> d :-> e
-  print eval
-  -}
-
-  {-
-  let
-    funcNames = map (\ (n ::: _) -> n) funcs
-    tryFG f gStr = hWithFEqGH f . fromJust $ M.lookup gStr funcToType
-    tryF f = (f, map (\ gStr -> (gStr, tryFG f gStr)) funcNames)
-    myF1 = a :-> a :-> b
-    myF2 = a :-> b :-> b :-> c
-    pp (f, ress) = putStr . unlines $
-      ["", show f] ++ spaceTable
-      (map (\ (s, res) -> [s ++ ":", show res]) ress)
-  pp $ tryF myF1
-  pp $ tryF myF2
-  -}
